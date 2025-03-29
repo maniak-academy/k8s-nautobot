@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nautobot
+  labels:
+    app: nautobot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nautobot
+  template:
+    metadata:
+      labels:
+        app: nautobot
+    spec:
+      containers:
+      - name: nautobot
+        image: networktocode/nautobot:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: NAUTOBOT_ALLOWED_HOSTS
+          value: "*"
+        - name: NAUTOBOT_DB_HOST
+          value: "postgres"
+        - name: NAUTOBOT_DB_NAME
+          value: "nautobot"
+        - name: NAUTOBOT_DB_USER
+          value: "nautobot"
+        - name: NAUTOBOT_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nautobot-secrets
+              key: db-password
+        - name: NAUTOBOT_REDIS_HOST
+          value: "redis"
+        - name: NAUTOBOT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: nautobot-secrets
+              key: secret-key
+        - name: NAUTOBOT_SUPERUSER_NAME
+          value: "admin"
+        - name: NAUTOBOT_SUPERUSER_EMAIL
+          value: "admin@example.com"
+        - name: NAUTOBOT_SUPERUSER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nautobot-secrets
+              key: superuser-password
+        - name: NAUTOBOT_SUPERUSER_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: nautobot-secrets
+              key: api-token
+        - name: NAUTOBOT_CREATE_SUPERUSER
+          value: "true"
+        resources:
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10 
